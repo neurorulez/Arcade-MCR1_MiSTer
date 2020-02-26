@@ -143,13 +143,10 @@ wire [15:0] audio_l, audio_r;
 
 wire [10:0] ps2_key;
 
-wire [15:0] joy1_USB, joy2_USB, joy3_USB, joy4_USB;
-wire [15:0] joy1 = |status[31:30] ? {3'b000,joydb15_1[9],1'b0,joydb15_1[8],joydb15_1[11:10],joydb15_1[7:0]} : joy1_USB;
-wire [15:0] joy2 =  status[31]    ? {3'b000,joydb15_2[9],joydb15_2[8],1'b0,joydb15_2[11:10],joydb15_2[7:0]} : status[30] ? joy1_USB : joy2_USB;
-wire [15:0] joy3 = joy3_USB;
-wire [15:0] joy4 = joy4_USB;
-wire [15:0] joy = joy1 | joy2 | joy3 | joy4;
-wire [15:0] joy1a, joy2a, joy3a, joy4a;
+wire [31:0] joy1_USB, joy2_USB;
+wire [31:0] joy1 = |status[31:30] ? {3'b000,joydb15_1[9],1'b0,joydb15_1[8],joydb15_1[11:10],joydb15_1[7:0]} : joy1_USB;
+wire [31:0] joy2 =  status[31]    ? {3'b000,joydb15_2[9],joydb15_2[8],1'b0,joydb15_2[11:10],joydb15_2[7:0]} : status[30] ? joy1_USB : joy2_USB;
+wire [31:0] joy = joy1 | joy2;
 
 reg [15:0] joydb15_1,joydb15_2;
 joy_db15 joy_db15
@@ -192,13 +189,6 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.joy_raw(joydb15_1[5:0]),
 	.joystick_0(joy1_USB),
 	.joystick_1(joy2_USB),
-	.joystick_2(joy3_USB),
-	.joystick_3(joy4_USB),
-
-	.joystick_analog_0(joy1a),
-	.joystick_analog_1(joy2a),
-	.joystick_analog_2(joy3a),
-	.joystick_analog_3(joy4a),
 
 	.ps2_key(ps2_key)
 );
@@ -297,6 +287,8 @@ wire m_fire1a  = btn_fireA  | joy1[4];
 wire m_fire1b  = btn_fireB  | joy1[5];
 //wire m_fire1c  = btn_fireC  | joy1[6];
 //wire m_fire1d  = btn_fireD  | joy1[7];
+wire m_spccw1  =              joy1[30];
+wire m_spcw1   =              joy1[31];
 
 wire m_right2  = btn_right2 | joy2[0];
 wire m_left2   = btn_left2  | joy2[1];
@@ -306,6 +298,8 @@ wire m_fire2a  = btn_fire2A | joy2[4];
 wire m_fire2b  = btn_fire2B | joy2[5];
 //wire m_fire2c  = btn_fire2C | joy2[6];
 //wire m_fire2d  = btn_fire2D | joy2[7];
+wire m_spccw2  =              joy2[30];
+wire m_spcw2   =              joy2[31];
 
 wire m_right   = m_right1 | m_right2;
 wire m_left    = m_left1  | m_left2; 
@@ -315,6 +309,8 @@ wire m_fire_a  = m_fire1a | m_fire2a;
 wire m_fire_b  = m_fire1b | m_fire2b;
 //wire m_fire_c  = m_fire1c | m_fire2c;
 //wire m_fire_d  = m_fire1d | m_fire2d;
+wire m_spccw   = m_spccw1 | m_spccw2;
+wire m_spcw    = m_spcw1  | m_spcw2;
 
 reg  [7:0] input_0;
 reg  [7:0] input_1;
@@ -457,10 +453,10 @@ spinner #(4,8) spinner
 	.clk(clk_sys),
 	.reset(reset),
 	.fast(m_fire_b),
-	.minus(m_left),
-	.plus(m_right),
+	.minus(m_left | m_spccw),
+	.plus(m_right | m_spcw),
 	.strobe(vs),
-	.use_spinner(status[6]),
+	.use_spinner(status[6] | m_spccw | m_spcw),
 	.spin_angle(spin_angle)
 );
 
